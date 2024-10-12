@@ -3,7 +3,7 @@ import Sidebar from "../../components/Sidebar/Sidebar"
 import { useLocation } from "react-router-dom"
 
 const PageLayout = ({children}) => {
-  const pathname = useLocation();
+  const { pathname } = useLocation();
 
   return <>
     <Flex>
