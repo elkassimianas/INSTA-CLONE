@@ -38,7 +38,7 @@ const Signup = () => {
         <Input placeholder="Password" fontSize={14} type={showPassword ? "text" : "password"}
             size={"sm"}
             value={inputs.password}
-            onChange={(e) => setInputs({...inputs, password:e.target.value})}
+            onChange={(e) => setInputs({...inputs, password: e.target.value})}
         />
         <InputRightElement h={"full"}>
             <Button variant={"ghost"} size={"sm"} onClick={() => setShowPassword(!showPassword)}>
