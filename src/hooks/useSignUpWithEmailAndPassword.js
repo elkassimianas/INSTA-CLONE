@@ -7,19 +7,9 @@ import useAuthStore from '../store/authStore';
 
 const useSignUpWithEmailAndPassword = () => {
 
-    const [createUserWithEmailAndPassword, loading, error] = useCreateUserWithEmailAndPassword(auth);
+    const [createUserWithEmailAndPassword, ,loading, error] = useCreateUserWithEmailAndPassword(auth);
     const showToast = useShowToast();
     const loginUser = useAuthStore(state => state.login);
-
-    // useEffect(() => {
-    //     if (error === undefined) {
-    //         console.log("General error: Signup failed with a 400 error");
-    //         showToast("Error", "Signup failed due to an invalid request. Please check your input.", "error");
-    //     } else if (error) {
-    //         console.log("Error from hook:", error.message);
-    //         showToast("Error", error.message, "error");
-    //     }
-    // }, [error]);
 
     const signup = async (inputs) => {
         if (!inputs.email || !inputs.password || !inputs.username || !inputs.fullName) {
@@ -29,10 +19,8 @@ const useSignUpWithEmailAndPassword = () => {
 
         try {
             const newUser = await createUserWithEmailAndPassword(inputs.email, inputs.password);
-            console.log(error);
             if (!newUser && error) {
-                showToast("Error", error.message, "error");
-                return;
+                throw error;
             }
             if (newUser) {
                 const userDoc = {
@@ -54,12 +42,6 @@ const useSignUpWithEmailAndPassword = () => {
         }
         catch (error) {
             showToast("Error", error.message, "error");
-            // const errorMessage = error.message || "An error occurred, please try again.";
-            // if (errorMessage.includes("EMAIL_EXISTS")) {
-            //     showToast("Error", "This email is already registered. Please try logging in.", "error");
-            // } else {
-            //     showToast("Error", errorMessage, "error");
-            // }
         }
     }
   return {loading,error,signup}
