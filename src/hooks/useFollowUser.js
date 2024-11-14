@@ -34,10 +34,12 @@ const useFollowUser = (userId) => {
                     ...authUser,
                     following: authUser.following.filter(uid => uid !== userId)
                 });
+            if (userProfile) {
                 setUserProfile({
                     ...userProfile,
                     followers: userProfile.followers.filter(uid => uid !== authUser.uid)
                 });
+            }
 
                 localStorage.setItem('user-info',
                     JSON.stringify({
