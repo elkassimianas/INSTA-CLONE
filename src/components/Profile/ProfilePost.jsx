@@ -1,17 +1,57 @@
-import { Avatar, Box, Button, Divider, Flex, GridItem, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay, Text, useDisclosure, VStack } from "@chakra-ui/react"
-import { AiFillHeart } from "react-icons/ai"
-import { FaComment } from "react-icons/fa"
-import { MdDelete } from "react-icons/md"
-import Comment from "../Comment/Comment"
-import PostFooter from "../FeedPosts/PostFooter"
-import useUserProfileStore from "../../store/userProfileStore"
-import useAuthStore from "../../store/authStore"
+import { Avatar, Button, Divider, Flex, GridItem, Image, Modal, ModalBody, ModalCloseButton,
+    ModalContent, ModalOverlay, Text, useDisclosure, VStack } from "@chakra-ui/react"
+import { AiFillHeart } from "react-icons/ai";
+import { FaComment } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+import Comment from "../Comment/Comment";
+import PostFooter from "../FeedPosts/PostFooter";
+import useUserProfileStore from "../../store/userProfileStore";
+import useAuthStore from "../../store/authStore";
+import useShowToast from "../../hooks/useShowToast";
+import { useState } from "react";
+import { deleteObject, ref } from "firebase/storage";
+import { firestore, storage } from "../../firebase/firebase";
+import { arrayRemove, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import usePostStore from "../../store/postStore";
 
 const ProfilePost = ({ post }) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure();
     const userProfile = useUserProfileStore((state) => state.userProfile);
     const authUser = useAuthStore((state) => state.user);
+    const showToast = useShowToast();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const deletePost = usePostStore((state) => state.deletePost);
+    const deletePostFromProfile = useUserProfileStore((state) => state.deletePost);
+
+    const handleDeletePost = async () => {
+        if (!window.confirm("Are you sure you want to delete this post")) return;
+        if(isDeleting) return ;
+        try {
+            const imageRef = ref(storage, `posts/${post.id}`);
+            await deleteObject(imageRef);
+            const userRef = doc(firestore, "users", authUser.uid);
+            await deleteDoc(doc(firestore, "posts", post.id));
+
+            await updateDoc(userRef, {
+                posts: arrayRemove(post.id),
+            });
+
+            deletePost(post.id);
+            deletePostFromProfile(post.id);
+
+            showToast("Success", "Post deleted successfully", "success");
+            
+        } catch (error) {
+            if (error.code === "storage/object-not-found") {
+                console.warn("Object not found in storage, skipping delete.");
+            }
+            else
+                 showToast("Error", error.message, "error");
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
   return <>
   
@@ -82,6 +122,8 @@ const ProfilePost = ({ post }) => {
                                 _hover={{bg:"whiteAlpha.300", color:"red.600"}}
                                 borderRadius={4}
                                 p={1}
+                                onClick={handleDeletePost}
+                                isLoading={isDeleting}
                             >
                                 <MdDelete size={20} cursor={"pointer"}/>
                             </Button>
@@ -90,21 +132,12 @@ const ProfilePost = ({ post }) => {
                     <Divider bg={"gray.500"} my={4}/>
 
                     <VStack w={"full"} alignItems={"start"} maxH={"350px"} overflowY={"auto"}>
-                        <Comment
-                            createdAt={"1d ago"}
-                            username={"elkassimianas_"}
-                            profilePic={"/profilepic.png"}
-                            text={"You look great ❤"}
-                        />
-                        <Comment
-                            createdAt={"18h ago"}
-                            username={"abrahmov"}
-                            profilePic={"https://bit.ly/dan-abramov"}
-                            text={"Nice pic"}
-                        />         
+                        {post.comments.map((comment) => (
+                            <Comment key={comment.id} comment={comment} />
+                        ))}     
                     </VStack>
                     <Divider my={4} bg={"gray.800"} />
-                    <PostFooter isProfilePage={true}/>
+                    <PostFooter isProfilePage={true} post={post}/>
                 </Flex>
             </Flex>
           </ModalBody>
